@@ -16,7 +16,8 @@ SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
-from ingestion_trust.core import WinnerStyleConfig, train_and_evaluate_models
+from ingestion_trust.core import WinnerStyleConfig, measure_integrity_overhead, plot_data_quality_summary, train_and_evaluate_models
+from ingestion_trust.batch_orchestrator import prepare_pipeline_paths, run_batch_pipeline
 from ingestion_trust.winner_style import (
     add_delta_time_features,
     build_rate_features_train_only,
@@ -90,6 +91,27 @@ def test_temporal_split_integrity() -> None:
     assert val_idx.max() < test_idx.min()
     assert df.iloc[train_idx]["click_time"].max() <= df.iloc[val_idx]["click_time"].min()
     assert df.iloc[val_idx]["click_time"].max() <= df.iloc[test_idx]["click_time"].min()
+
+
+def test_import_compatibility_and_orchestrator_api_surface(tmp_path: Path) -> None:
+    assert WinnerStyleConfig is not None
+    assert callable(train_and_evaluate_models)
+    assert callable(plot_data_quality_summary)
+    assert callable(measure_integrity_overhead)
+    assert callable(run_batch_pipeline)
+    args = type(
+        "Args",
+        (),
+        {
+            "artifacts_dir": tmp_path / "artifacts",
+            "figures_dir": tmp_path / "figures",
+            "model_dir": tmp_path / "models",
+        },
+    )()
+    paths = prepare_pipeline_paths(args)
+    assert paths.metrics_dir == (tmp_path / "artifacts" / "metrics")
+    assert paths.figures_dir == (tmp_path / "figures")
+    assert paths.model_dir == (tmp_path / "models")
 
 
 def test_row_cap_policy_meets_positive_support() -> None:
@@ -212,6 +234,22 @@ def test_next_click_guard_and_track_specific_outputs(tmp_path: Path) -> None:
         assert topk_path.exists()
         assert pr_k_path.exists()
         assert lift_path.exists()
+
+        for key in [
+            "track_mode",
+            "target_col",
+            "target_semantics",
+            "best_model_name",
+            "best_probability_variant",
+            "feature_diagnostics",
+            "calibration_summary",
+            "ranking_outputs",
+            "plot_paths",
+            "row_window_policy",
+            "support_counts",
+            "class_prevalence",
+        ]:
+            assert key in summary
 
         for _, raw_path in summary.get("plot_paths", {}).items():
             p = _resolve_output_path(str(raw_path))

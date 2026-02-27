@@ -278,6 +278,39 @@ Expected changes with larger data: model stability typically improves, precision
 
 Values in the report/presentation should be copied from generated artifacts, not manually typed from memory.
 
+## Code Map (Viva)
+
+Use this section when explaining the implementation flow in viva. The refactor keeps behavior the same but separates responsibilities so the call flow is easier to narrate.
+
+- CLI entrypoint:
+  - `scripts/run_batch_pipeline.py`
+  - Purpose: argument parsing + guardrail validation + handoff to orchestrator.
+- Batch orchestration (stage-based):
+  - `src/ingestion_trust/batch_orchestrator.py`
+  - Purpose: runs trust ingestion, modeling, audit/overhead, optional stream comparison, and final summary/debug exports.
+- Stage contracts / typed results:
+  - `src/ingestion_trust/pipeline_contracts.py`
+  - Purpose: dataclasses for stage outputs (`TrustStageResult`, `ModelingStageResult`, etc.).
+- Core shared utilities (compatibility facade):
+  - `src/ingestion_trust/core.py`
+  - Purpose: audit/integrity helpers, dataset/provenance utilities, and compatibility re-exports for moved functions.
+- Spark veracity / ingestion logic:
+  - `src/ingestion_trust/spark_utils.py`
+  - Purpose: Spark session, schema casting, feature engineering, veracity checks, drift metrics, veracity score.
+- Winner-style feature engineering and leakage-safe prep:
+  - `src/ingestion_trust/winner_style.py`
+  - Purpose: temporal splits, row-cap support policy, causal feature generation, OOF target/stat encoding, bag subsampling.
+- Modeling engine (hardened batch evaluation):
+  - `src/ingestion_trust/modeling_pipeline.py`
+  - Purpose: baseline models + LightGBM bagging, Platt calibration, threshold sweep, top-K metrics, track-specific artifacts.
+- Trust/report plotting helpers:
+  - `src/ingestion_trust/trust_plots.py`
+  - Purpose: DQ summary, DQ percentage, attribution prevalence plots.
+
+Detailed viva walkthrough notes:
+
+- `reports/viva_code_walkthrough.md`
+
 ## Troubleshooting
 
 ### Kafka not running / connection refused

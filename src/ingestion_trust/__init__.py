@@ -41,6 +41,14 @@ from .spark_utils import (
     run_veracity_checks,
     compute_veracity_score,
 )
+from .batch_orchestrator import run_batch_pipeline
+from .pipeline_contracts import (
+    BatchPipelineResult,
+    ModelingStageResult,
+    PipelinePaths,
+    TrackExecutionSpec,
+    TrustStageResult,
+)
 
 __all__ = [
     "build_run_metadata",
@@ -76,4 +84,10 @@ __all__ = [
     "compute_drift_metrics",
     "run_veracity_checks",
     "compute_veracity_score",
+    "run_batch_pipeline",
+    "PipelinePaths",
+    "TrackExecutionSpec",
+    "TrustStageResult",
+    "ModelingStageResult",
+    "BatchPipelineResult",
 ]
